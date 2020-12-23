@@ -1,6 +1,9 @@
 const User = require('../models/user');
 const md5 = require('md5');
 const utils = require('../utils');
+var multer  = require('multer');
+var fs  = require('fs');
+const path = require('path');
 
 exports.create = async function (req, res) {
   req.body.password = md5(req.body.password);
@@ -24,7 +27,6 @@ exports.create = async function (req, res) {
 
 exports.list = function (req, res) {
   const isAdmin = utils.getUserInfoFromToken(req);
-  console.log("isAdmin", isAdmin);
   User.find({}).exec(function (err, users) {
     if (err) {
       res.status(500).send(err);
@@ -74,7 +76,7 @@ exports.updateUserInfo = async function (req, res) {
   }
 };
 
-exports.deleteUser= function (req, res) {
+exports.deleteUser = function (req, res) {
   User.deleteOne({ _id: req.params.id }).exec(function (err) {
     if (err) {
       res.status(500).send(err);
@@ -82,6 +84,35 @@ exports.deleteUser= function (req, res) {
     res.status(200).send('success');
   })
 };
+
+exports.changeProfilePicture = function (req, res) {
+  let storage = multer.diskStorage({
+    destination: function (req, file, callback) {
+        let dir = path.join(__dirname, '..', 'avatar');
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+        callback(null, dir);
+    },
+    filename: function (req, file, callback) {
+        callback(null, req.params.id + '.jpeg');
+    }
+  });
+  
+  let upload = multer({ storage: storage}).single('avatar');
+  
+  upload(req, res, function (err) {
+    if (err) {
+      res.status(500).send("Something went wrong");
+    }
+    User.updateOne({ _id: req.params.id }, { img: req.params.id + '.jpg' }).exec(function (err, user) {
+      if (err) {
+        res.status(500).send("Something went wrong");
+      } else
+        res.status(200).send('Changed profile picture successfully');
+    })
+  });
+}
 
 function checkEditAndGetUserPermission (req) {
   const userInfo = utils.getUserInfoFromToken(req);

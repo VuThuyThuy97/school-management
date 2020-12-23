@@ -14,7 +14,6 @@ exports.create = async function (req, res) {
     } else {
       newClass.save(function (err, newClass) {
         if(err) {
-          console.log(err);
           res.status(400).send(err);
         } else {
           res.status(200).send(newClass);

@@ -29,7 +29,6 @@ exports.list = function (req, res) {
 
 exports.getRoomInfo = function (req, res) {
   Room.findById(req.params.id).exec(function (err, room) {
-    console.log(room)
     if (err) {
       res.status(500).send(err);
     }
