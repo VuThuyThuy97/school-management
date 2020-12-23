@@ -3,18 +3,18 @@ const app = express();
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
-const db = require('./server/db');
+const db = require('./db');
 
 const dbConnection = mongoose.connection;
 
 app.use(bodyParser.json());
 app.use("/", express.static(__dirname));
 
-let verifyAuthen = require('./server/verify-authentication');
-const authenticationRouter = require('./server/routes/authentication');
-const userRouter = require('./server/routes/user');
-const roomRouter = require('./server/routes/room');
-const classRouter = require('./server/routes/class');
+let verifyAuthen = require('./verify-authentication');
+const authenticationRouter = require('./routes/authentication');
+const userRouter = require('./routes/user');
+const roomRouter = require('./routes/room');
+const classRouter = require('./routes/class');
 
 app.use('/auth', authenticationRouter);
 app.use('/api', verifyAuthen(), userRouter);
