@@ -76,8 +76,8 @@ exports.updateUserInfo = async function (req, res) {
       username: req.body.username,
       name: req.body.name,
       phone: req.body.phone,
-      email: req.body.emil,
-      isAdmin: true
+      email: req.body.email,
+      subject: req.body.subject
     }
     if (req.body.password) {
       updatedInfo.password = md5(req.body.password);

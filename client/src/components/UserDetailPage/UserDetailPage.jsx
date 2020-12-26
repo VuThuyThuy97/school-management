@@ -18,6 +18,7 @@ export class UserDetailComponent extends Component {
     phone: null,
     password: null,
     img: null,
+    subject: null,
   }
 
   componentWillMount() {

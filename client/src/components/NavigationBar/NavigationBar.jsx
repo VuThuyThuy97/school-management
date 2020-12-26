@@ -41,7 +41,7 @@ export class NavigationBarComponent extends Component {
             </Navbar.Brand>
           }
           {this.props.user?.isAdmin === false && <Navbar.Brand>
-              <a href="/all-classess">Classes</a>
+              <a href="/all-classes">Classes</a>
             </Navbar.Brand>
           }
         </Navbar.Header>
