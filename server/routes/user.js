@@ -27,7 +27,7 @@ router.delete('/users/:id', utils.requireRole(['admin']), function(req, res) {
   userController.deleteUser(req, res);
 });
 
-router.post('/users/:id/uploadProfilePicture', utils.requireRole(['admin', 'teacher']), function(req, res) {
+router.post('/users/:id/upload-profile-picture', utils.requireRole(['admin', 'teacher']), function(req, res) {
   userController.changeProfilePicture(req, res);
 });
 

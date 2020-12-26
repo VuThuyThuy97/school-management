@@ -4,11 +4,18 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
 const db = require('./db');
+var cors = require('cors')
+var morgan = require('morgan');
 
 const dbConnection = mongoose.connection;
 
 app.use(bodyParser.json());
-app.use("/", express.static(__dirname));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cors());
+app.use(morgan('dev'));
+
+app.use("/avatar", express.static(__dirname + '/avatar'));
+
 
 let verifyAuthen = require('./verify-authentication');
 const authenticationRouter = require('./routes/authentication');
@@ -17,7 +24,7 @@ const roomRouter = require('./routes/room');
 const classRouter = require('./routes/class');
 
 app.use('/auth', authenticationRouter);
-app.use('/api', verifyAuthen(), userRouter);
+app.use('/api', userRouter);
 app.use('/api', verifyAuthen(), roomRouter);
 app.use('/api', verifyAuthen(), classRouter);
 

@@ -12,7 +12,8 @@ export const login = (username, password) => {
           dispatch(auth.loginFailed(response.error));
         } else {
           localStorage.setItem('token', response.token);
-          History.push('/classes');
+          if (response.isAdmin) History.push('/classes');
+          else History.push('/all-classes');
           dispatch(auth.loginSuccess(response.token, username, response.isAdmin));
         }
       });

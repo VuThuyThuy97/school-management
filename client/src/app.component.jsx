@@ -41,7 +41,7 @@ export default () => {
           <AuthenticatedRoute path="/classes" component={ClassListPage} />
           <AuthenticatedRoute path="/rooms" component={RoomListPage} />
           <AuthenticatedRoute path="/me" component={UserDetailPage} />
-          <AuthenticatedRoute path="/all-classess" component={TeacherClassListPage} />
+          <AuthenticatedRoute path="/all-classes" component={TeacherClassListPage} />
         </Switch>
       </Router>
     </Provider>

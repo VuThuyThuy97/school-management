@@ -155,7 +155,7 @@ const getAllClassByUser = () => {
     method: 'get',
     headers: authHeader()
   };
-  return fetch(BASE_URL + CLASSES_ENDPOINT + 'byUser', options)
+  return fetch(BASE_URL + CLASSES_ENDPOINT + '-by-user', options)
     .then(res => res.json());
 };
 
@@ -172,7 +172,7 @@ const changeProfilePicture = (userId, file) => {
     headers: header,
     body: file
   };
-  return fetch(BASE_URL + USERS_ENDPOINT + `/${userId}/uploadProfilePicture`, options)
+  return fetch(BASE_URL + USERS_ENDPOINT + `/${userId}/upload-profile-picture`, options)
     .then(res => res);
 };
 

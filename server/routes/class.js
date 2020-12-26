@@ -23,7 +23,7 @@ router.delete('/classes/:id', utils.requireRole(['admin']), function(req, res) {
   classController.deleteClass(req, res);
 });
 
-router.get('/classesByUser', utils.requireRole(['admin', 'teacher']), function(req, res) {
+router.get('/classes-by-user', utils.requireRole(['admin', 'teacher']), function(req, res) {
   classController.getAllClassByUser(req, res);
 });
 
