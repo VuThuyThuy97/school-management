@@ -47,7 +47,7 @@ export class SignInComponent extends Component {
           </Col>
         </Row>
         <Row>
-          <Col xs={6} md={6} xsOffset={3} style={{ marginTop: '100px' }}>
+          <Col xs={6} md={6} xsOffset={3} style={{ marginTop: '100px', marginLeft: 'calc(50% - 300px)', width: '600px' }}>
             <Panel bsStyle="primary">
               <Panel.Heading>
                 <Panel.Title componentClass="h3">Sign In</Panel.Title>
