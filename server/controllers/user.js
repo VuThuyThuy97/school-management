@@ -1,23 +1,25 @@
 const User = require('../models/user');
 const md5 = require('md5');
 const utils = require('../utils');
-var multer  = require('multer');
-var fs  = require('fs');
+const multer  = require('multer');
+const fs  = require('fs');
 const path = require('path');
+const sizeOf = require('image-size');
+const sharp = require('sharp');
 
 exports.create = async function (req, res) {
   req.body.password = md5(req.body.password);
   let newUser = new User(req.body);
   if (!req.body.username.length) {
-    res.status(400).send('Username can not be blank');
+    res.status(400).send({ error: 'Username can not be blank' });
   } else if (!req.body.password.length) {
-    res.status(400).send('Password can not be blank');
+    res.status(400).send({ error: 'Password can not be blank' });
   } else if (await User.isUsernameTaken(req.body.username)) {
-    res.status(400).send('Username already taken');
+    res.status(400).send({ error: 'Username already taken' });
   } else {
     newUser.save(function (err, user) {
       if(err) {
-        res.status(400).send('Username is not available');
+        res.status(400).send({ error: 'Error creating user: ' + err });
       } else {
         res.status(200).send(user);
       }
@@ -29,7 +31,7 @@ exports.list = function (req, res) {
   const isAdmin = utils.getUserInfoFromToken(req);
   User.find({}).exec(function (err, users) {
     if (err) {
-      res.status(500).send(err);
+      res.status(500).send({ error: err });
     }
     res.status(200).send(users);
   })
@@ -37,14 +39,14 @@ exports.list = function (req, res) {
 
 exports.getUserInfo = function (req, res) {
   if (!checkEditAndGetUserPermission(req)) {
-    res.status(403).send("Permission denied.");
+    res.status(403).send({ error: "Permission denied." });
   } else {
     User.findById(req.params.id).exec(function (err, user) {
       if (err) {
-        res.status(500).send(err);
+        res.status(500).send({ error: err });
       }
       if (!user) {
-        res.status(404).send('Not found');
+        res.status(404).send({ error: 'Not found' });
       } else {
         res.status(200).send(user);
       }
@@ -52,23 +54,42 @@ exports.getUserInfo = function (req, res) {
   }
 };
 
+exports.getLoggedInUserInfo = function (req, res) {
+  const userId = utils.getUserInfoFromToken(req)._id
+  User.findById(userId).exec(function (err, user) {
+    if (err) {
+      res.status(500).send({ error: err });
+    }
+    if (!user) {
+      res.status(404).send({ error: 'Not found' });
+    } else {
+      res.status(200).send(user);
+    }
+  })
+};
+
 exports.updateUserInfo = async function (req, res) {
   if (!checkEditAndGetUserPermission(req)) {
-    res.status(403).send("Permission denied.");
+    res.status(403).send({ error: "Permission denied." });
   } else {
     let updatedInfo = {
       username: req.body.username,
       name: req.body.name,
+      phone: req.body.phone,
+      email: req.body.emil,
       isAdmin: true
     }
+    if (req.body.password) {
+      updatedInfo.password = md5(req.body.password);
+    }
     if (!req.body.username.length) {
-      res.status(400).send('Username can not be blank');
-    } else if (await User.isUsernameTaken(req.body.username)) {
-      res.status(400).send('Username already taken');
+      res.status(400).send({ error: 'Username can not be blank'});
+    } else if (await User.isUsernameTaken(req.body.username, req.params.id)) {
+      res.status(400).send({ error: 'Username already taken' });
     } else {
       User.updateOne({ _id: req.params.id }, updatedInfo).exec(function (err, user) {
         if (err) {
-          res.status(500).send('Username is not available');
+          res.status(500).send({ error: 'Username is not available' });
         }
         res.status(200).send(user);
       })
@@ -86,6 +107,8 @@ exports.deleteUser = function (req, res) {
 };
 
 exports.changeProfilePicture = function (req, res) {
+
+  const fileNameWithDate = req.params.id + Date.now();
   let storage = multer.diskStorage({
     destination: function (req, file, callback) {
         let dir = path.join(__dirname, '..', 'avatar');
@@ -95,7 +118,7 @@ exports.changeProfilePicture = function (req, res) {
         callback(null, dir);
     },
     filename: function (req, file, callback) {
-        callback(null, req.params.id + '.jpeg');
+        callback(null, fileNameWithDate + '.jpg');
     }
   });
   
@@ -103,14 +126,27 @@ exports.changeProfilePicture = function (req, res) {
   
   upload(req, res, function (err) {
     if (err) {
-      res.status(500).send("Something went wrong");
+      res.status(500).send({ error: "Something went wrong" });
+    } else {
+      const fileName = path.join(__dirname, '..', 'avatar', fileNameWithDate + '.jpg');
+        const outputFileName = path.join(__dirname, '..', 'avatar', fileNameWithDate + '_resized.jpg');
+        var dimensions = sizeOf(fileName);
+        const square = Math.min(dimensions.width, dimensions.height);
+        sharp(fileName).extract({ width: square, height: square, left: parseInt((dimensions.width - square) / 2), top: parseInt((dimensions.height - square) / 2) }).toFile(outputFileName)
+          .then(function(new_file_info) {
+              console.log("Image cropped and saved");
+              User.updateOne({ _id: req.params.id }, { img: fileNameWithDate + '_resized.jpg' }).exec(function (err, user) {
+                if (err) {
+                  res.status(500).send({ error: "Something went wrong" });
+                } else {
+                    res.status(200).send({ error: 'Changed profile picture successfully' });
+                }
+              })
+          })
+          .catch(function(err) {
+            res.status(500).send({ error: "Something went wrong" });
+          });
     }
-    User.updateOne({ _id: req.params.id }, { img: req.params.id + '.jpg' }).exec(function (err, user) {
-      if (err) {
-        res.status(500).send("Something went wrong");
-      } else
-        res.status(200).send('Changed profile picture successfully');
-    })
   });
 }
 

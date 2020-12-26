@@ -4,13 +4,13 @@ const moment = require('moment');
 exports.create = async function (req, res) {
   let newRoom = new Room(req.body);
   if (!req.body.name.length) {
-    res.status(400).send('Name can not be blank');
+    res.status(400).send({ error: 'Name can not be blank' });
   } else if (await Room.isNameTaken(req.body.name)) {
-    res.status(400).send('Name already taken');
+    res.status(400).send({ error: 'Name already taken' });
   } else {
     newRoom.save(function (err, room) {
       if(err) {
-        res.status(400).send(err);
+        res.status(400).send({ error: err });
       } else {
         res.status(200).send(room);
       }
@@ -21,7 +21,7 @@ exports.create = async function (req, res) {
 exports.list = function (req, res) {
   Room.find({}).exec(function (err, rooms) {
     if (err) {
-      res.status(500).send(err);
+      res.status(500).send({ error: err });
     }
     res.status(200).send(rooms);
   })
@@ -30,10 +30,10 @@ exports.list = function (req, res) {
 exports.getRoomInfo = function (req, res) {
   Room.findById(req.params.id).exec(function (err, room) {
     if (err) {
-      res.status(500).send(err);
+      res.status(500).send({ error: err });
     }
     if (!room) {
-      res.status(404).send('Not found');
+      res.status(404).send({ error: 'Not found' });
     } else {
       res.status(200).send(room);
     }
@@ -42,13 +42,13 @@ exports.getRoomInfo = function (req, res) {
 
 exports.updateRoomInfo = async function (req, res) {
   if (!req.body.name.length) {
-    res.status(400).send('Name can not be blank');
-  } else if (await Room.isNameTaken(req.body.name)) {
-    res.status(400).send('Name already taken');
+    res.status(400).send({ error: 'Name can not be blank' });
+  } else if (await Room.isNameTaken(req.body.name, req.params.id)) {
+    res.status(400).send({ error: 'Name already taken' });
   } else {
     Room.updateOne({ _id: req.params.id }, req.body).exec(function (err, room) {
       if (err) {
-        res.status(500).send(err);
+        res.status(500).send({ error: err });
       }
       res.status(200).send(room)
     })

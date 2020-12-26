@@ -15,6 +15,10 @@ router.get('/users/:id', utils.requireRole(['admin', 'teacher']), function(req, 
   userController.getUserInfo(req, res);
 });
 
+router.get('/me', utils.requireRole(['admin', 'teacher']), function(req, res) {
+  userController.getLoggedInUserInfo(req, res);
+});
+
 router.put('/users/:id', utils.requireRole(['admin', 'teacher']), function(req, res) {
   userController.updateUserInfo(req, res);
 });
@@ -23,7 +27,7 @@ router.delete('/users/:id', utils.requireRole(['admin']), function(req, res) {
   userController.deleteUser(req, res);
 });
 
-router.post('/users/:id/uploadProfilePicture', utils.requireRole(['teacher']), function(req, res) {
+router.post('/users/:id/uploadProfilePicture', utils.requireRole(['admin', 'teacher']), function(req, res) {
   userController.changeProfilePicture(req, res);
 });
 

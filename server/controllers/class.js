@@ -4,19 +4,22 @@ const moment = require('moment');
 
 exports.create = async function (req, res) {
   const canCreate = await timeAvailable(req.body.room, req.body.teacher, req.body.startTime, req.body.endTime)
-  if (!canCreate) {
-    res.status(400).send('Time is not available for this room or teacher');
+  if (!moment(req.body.startTime).isBefore(req.body.endTime)){
+    res.status(400).send({ error: 'Start time must before End time' });
+  } else if (!canCreate) {
+    res.status(400).send({ error: 'Time is not available for this room or teacher' });
   } else {
     if (!req.body.name.length) {
-      res.status(400).send('Name can not be blank');
+      res.status(400).send({ error: 'Name can not be blank' });
     } else if (await Class.isNameTaken(req.body.name)) {
-      res.status(400).send('Name already taken');
+      res.status(400).send({ error: 'Name already taken' });
     } else {
-      newClass.save(function (err, newClass) {
+      let newClass = new Class(req.body);
+      newClass.save(function (err, c) {
         if(err) {
-          res.status(400).send(err);
+          res.status(400).send({ error: err });
         } else {
-          res.status(200).send(newClass);
+          res.status(200).send(c);
         }
       });
     }
@@ -26,7 +29,7 @@ exports.create = async function (req, res) {
 exports.list = function (req, res) {
   Class.find({}).populate('teacher').populate('room').exec(function (err, classes) {
     if (err) {
-      res.status(500).send(err);
+      res.status(500).send({ error: err });
     }
     res.status(200).send(classes);
   })
@@ -35,10 +38,10 @@ exports.list = function (req, res) {
 exports.getClassInfo = function (req, res) {
   Class.findById(req.params.id).populate('teacher').populate('room').exec(function (err, foundedClass) {
     if (err) {
-      res.status(500).send(err);
+      res.status(500).send({ error: err });
     }
     if (!foundedClass) {
-      res.status(404).send('Not found');
+      res.status(404).send({ error: 'Not found' });
     } else {
       res.status(200).send(foundedClass);
     }
@@ -46,18 +49,20 @@ exports.getClassInfo = function (req, res) {
 };
 
 exports.updateClassInfo = async function (req, res) {
-  const canUpdate = await timeAvailable(req.body.room, req.body.teacher, req.body.startTime, req.body.endTime)
-  if (!canUpdate) {
-    res.status(400).send('Time is not available for this room or teacher');
+  const canUpdate = await timeAvailable(req.body.room, req.body.teacher, req.body.startTime, req.body.endTime, req.params.id)
+  if (!moment(req.body.startTime).isBefore(req.body.endTime)){
+    res.status(400).send({ error: 'Start time must before End time' });
+  } else if (!canUpdate) {
+    res.status(400).send({ error: 'Time is not available for this room or teacher' });
   } else {
     if (!req.body.name.length) {
-      res.status(400).send('Name can not be blank');
-    } else if (await Class.isNameTaken(req.body.name)) {
-      res.status(400).send('Name already taken');
+      res.status(400).send({ error: 'Name can not be blank' });
+    } else if (await Class.isNameTaken(req.body.name, req.params.id)) {
+      res.status(400).send({ error: 'Name already taken' });
     } else {
       Class.updateOne({ _id: req.params.id }, req.body).populate('teacher').populate('room').exec(function (err, updatedClass) {
         if (err) {
-          res.status(500).send(err);
+          res.status(500).send({ error: err });
         }
         res.status(200).send(updatedClass);
       })
@@ -80,7 +85,7 @@ exports.getAllClassByUser = function (req, res) {
 
   Class.find({ teacher: userInfo._id }).populate('teacher').populate('room').exec(function (err, classes) {
     if (err) {
-      res.status(500).send(err);
+      res.status({ error: 500 }).send(err);
     } else {
       const today = moment();
       let result = classes
@@ -95,19 +100,21 @@ exports.getAllClassByUser = function (req, res) {
   })
 }
 
-async function timeAvailable (roomId, teacherId, startTime, endTime) {
+async function timeAvailable (roomId, teacherId, startTime, endTime, classId) {
   const classesWithRoom = await Class.find({ room: roomId });
   const classesWithUser = await Class.find({ teacher: teacherId });
   let roomAvailable = true;
   let userAvailable = true;
 
-  roomAvailable = !classesWithRoom.find(c => 
+  roomAvailable = !classesWithRoom.filter(c => c._id != classId).find(c =>
     moment(startTime).isBetween(c.startTime, c.endTime) || moment(endTime).isBetween(c.startTime, c.endTime) 
     || moment(startTime).isSame(c.startTime) || moment(endTime).isSame(c.endTime)
+    || moment(c.startTime).isBetween(startTime, endTime) || moment(c.endTime).isBetween(startTime, endTime)
   )
-  userAvailable = !classesWithUser.find(c => 
+  userAvailable = !classesWithUser.filter(c => c._id != classId).find(c =>
     moment(startTime).isBetween(c.startTime, c.endTime) || moment(endTime).isBetween(c.startTime, c.endTime) 
     || moment(startTime).isSame(c.startTime) || moment(endTime).isSame(c.endTime)
+    || moment(c.startTime).isBetween(startTime, endTime) || moment(c.endTime).isBetween(startTime, endTime) 
   );
 
   return roomAvailable && userAvailable;

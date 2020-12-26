@@ -10,8 +10,10 @@ const ClassSchema = new Schema({
   room: { type: Schema.ObjectId, ref: 'Room' }
 });
 
-ClassSchema.statics.isNameTaken = async function (name) {
+ClassSchema.statics.isNameTaken = async function (name, id) {
   const foundClass = await this.findOne({ name });
+  if (foundClass && foundClass._id == id)
+    return false;
   return !!foundClass;
 };
 
